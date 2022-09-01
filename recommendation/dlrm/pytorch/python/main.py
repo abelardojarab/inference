@@ -391,7 +391,7 @@ class RunnerBase:
 class QueueRunner(RunnerBase):
     def __init__(self, model, ds, threads, post_proc=None, max_batchsize=128):
         super().__init__(model, ds, threads, post_proc, max_batchsize)
-        queue_size_multiplier = 16 #(args.samples_per_query_offline + max_batchsize - 1) // max_batchsize)
+        queue_size_multiplier = max_batchsize #(args.samples_per_query_offline + max_batchsize - 1) // max_batchsize)
         # self.tasks = JoinableQueue(maxsize=threads * queue_size_multiplier)
         self.tasks = JoinableQueue(threads * queue_size_multiplier)
         self.workers = []
