@@ -15,7 +15,8 @@ import os
 import sys
 import threading
 import time
-from multiprocessing import JoinableQueue
+# from multiprocessing import JoinableQueue
+from faster_fifo import Queue as JoinableQueue
 
 import mlperf_loadgen as lg
 import numpy as np
@@ -391,7 +392,8 @@ class QueueRunner(RunnerBase):
     def __init__(self, model, ds, threads, post_proc=None, max_batchsize=128):
         super().__init__(model, ds, threads, post_proc, max_batchsize)
         queue_size_multiplier = 4 #(args.samples_per_query_offline + max_batchsize - 1) // max_batchsize)
-        self.tasks = JoinableQueue(maxsize=threads * queue_size_multiplier)
+        # self.tasks = JoinableQueue(maxsize=threads * queue_size_multiplier)
+        self.tasks = JoinableQueue(threads * queue_size_multiplier)
         self.workers = []
         self.result_dict = {}
 
@@ -404,13 +406,18 @@ class QueueRunner(RunnerBase):
     def handle_tasks(self, tasks_queue):
         """Worker thread."""
         while True:
-            qitem = tasks_queue.get()
-            if qitem is None:
-                # None in the queue indicates the parent want us to exit
-                tasks_queue.task_done()
-                break
-            self.run_one_item(qitem)
-            tasks_queue.task_done()
+            # qitem = tasks_queue.get()
+            # if qitem is None:
+            #      # None in the queue indicates the parent want us to exit
+            #      # tasks_queue.task_done()
+            #      break
+            # self.run_one_item(qitem)
+            # tasks_queue.task_done()
+            qitem = tasks_queue.get_many(max_messages_to_get=4)
+            for q in qitem:
+                if q is None:
+                    return
+                self.run_one_item(q)
 
     def enqueue(self, query_samples):
         idx = [q.index for q in query_samples]
