@@ -421,11 +421,7 @@ class QueueRunner(RunnerBase):
                         return
                     self.run_one_item(q)
             except:
-                if empty_times > (threads * 2):
-                    return
-                else:
-                    empty_times = empty_times + 1
-                    pass
+                pass
 
     def enqueue(self, query_samples):
         idx = [q.index for q in query_samples]
@@ -450,9 +446,9 @@ class QueueRunner(RunnerBase):
 
     def finish(self):
         # exit all threads
-        for _ in self.workers:
+        # for _ in self.workers:
             # self.tasks.put(None)
-            self.tasks.put_many([None, None, None, None])
+        self.tasks.put_many([None, None, None, None] * len(self.workers))
         for worker in self.workers:
             worker.join()
 
