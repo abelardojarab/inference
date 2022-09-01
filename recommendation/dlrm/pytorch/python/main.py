@@ -424,15 +424,21 @@ class QueueRunner(RunnerBase):
         query_id = [q.id for q in query_samples]
         query_len = len(query_samples)
 
+        tasks_list = []
         if query_len < self.max_batchsize:
             batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets = self.ds.get_samples(idx)
-            self.tasks.put(Item(query_id, idx, batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
+            # self.tasks.put(Item(query_id, idx, batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
+            tasks_lists.append(Item(query_id, idx, batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
         else:
             bs = self.max_batchsize
             for i in range(0, query_len, bs):
                 ie = min(i + bs, query_len)
                 batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets = self.ds.get_samples(idx[i:ie])
-                self.tasks.put(Item(query_id[i:ie], idx[i:ie], batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
+                # self.tasks.put(Item(query_id[i:ie], idx[i:ie], batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
+				tasks_list.append(Item(query_id[i:ie], idx[i:ie], batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
+
+        # Put as many items in the queue
+        self.tasks.put_many(tasks_list)
 
     def finish(self):
         # exit all threads
