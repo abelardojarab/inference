@@ -17,6 +17,7 @@ import threading
 import time
 # from multiprocessing import JoinableQueue
 from faster_fifo import Queue as JoinableQueue
+from queue import Full, Empty
 
 import mlperf_loadgen as lg
 import numpy as np
@@ -391,7 +392,7 @@ class RunnerBase:
 class QueueRunner(RunnerBase):
     def __init__(self, model, ds, threads, post_proc=None, max_batchsize=128):
         super().__init__(model, ds, threads, post_proc, max_batchsize)
-        queue_size_multiplier = max_batchsize #(args.samples_per_query_offline + max_batchsize - 1) // max_batchsize)
+        queue_size_multiplier = 4 #(args.samples_per_query_offline + max_batchsize - 1) // max_batchsize)
         # self.tasks = JoinableQueue(maxsize=threads * queue_size_multiplier)
         self.tasks = JoinableQueue(threads * queue_size_multiplier)
         self.workers = []
@@ -414,41 +415,37 @@ class QueueRunner(RunnerBase):
             #      break
             # self.run_one_item(qitem)
             # tasks_queue.task_done()
-            try:
+            if not tasks_queue.empty():
                 qitem = tasks_queue.get_many(max_messages_to_get=4)
                 for q in qitem:
                     if q is None:
                         return
                     self.run_one_item(q)
-            except:
-                pass
 
     def enqueue(self, query_samples):
         idx = [q.index for q in query_samples]
         query_id = [q.id for q in query_samples]
         query_len = len(query_samples)
 
-        tasks_list = []
+        # tasks_list = []
         if query_len < self.max_batchsize:
             batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets = self.ds.get_samples(idx)
-            # self.tasks.put(Item(query_id, idx, batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
-            tasks_lists.append(Item(query_id, idx, batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
+            self.tasks.put(Item(query_id, idx, batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
+            # tasks_lists.append(Item(query_id, idx, batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
         else:
             bs = self.max_batchsize
             for i in range(0, query_len, bs):
                 ie = min(i + bs, query_len)
                 batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets = self.ds.get_samples(idx[i:ie])
-                # self.tasks.put(Item(query_id[i:ie], idx[i:ie], batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
-                tasks_list.append(Item(query_id[i:ie], idx[i:ie], batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
+                self.tasks.put(Item(query_id[i:ie], idx[i:ie], batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
+                # tasks_list.append(Item(query_id[i:ie], idx[i:ie], batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
 
-        # Put as many items in the queue
-        self.tasks.put_many(tasks_list)
 
     def finish(self):
         # exit all threads
-        # for _ in self.workers:
-            # self.tasks.put(None)
-        self.tasks.put_many([None, None, None, None] * len(self.workers))
+        for _ in self.workers:
+            self.tasks.put([None, None, None, None])
+
         for worker in self.workers:
             worker.join()
 

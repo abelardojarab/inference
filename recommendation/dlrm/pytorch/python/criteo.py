@@ -18,6 +18,9 @@ import inspect
 import torch
 from torch.utils.data import Dataset, RandomSampler
 
+import torch.multiprocessing
+torch.multiprocessing.set_sharing_strategy('file_system')
+
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("criteo")
 

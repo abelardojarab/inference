@@ -3,6 +3,8 @@ pytoch native backend for dlrm
 """
 # pylint: disable=unused-argument,missing-docstring
 import torch  # currently supports pytorch1.0
+import torch.multiprocessing
+torch.multiprocessing.set_sharing_strategy('file_system')
 import backend
 from dlrm_s_pytorch import DLRM_Net
 import numpy as np
