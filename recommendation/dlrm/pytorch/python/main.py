@@ -440,7 +440,8 @@ class QueueRunner(RunnerBase):
             while True:
                 with contextlib.suppress():
                     try:
-                        self.tasks.put_nowait(Item(query_id, idx, batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
+                        self.tasks.put_nowait(
+                            Item(query_id, idx, batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
                         return
                     except faster_fifo.Full:
                         pass
@@ -452,7 +453,8 @@ class QueueRunner(RunnerBase):
                 while True:
                     with contextlib.suppress():
                         try:
-                            self.tasks.put_nowait(Item(query_id[i:ie], idx[i:ie], batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
+                            self.tasks.put_nowait(
+                                Item(query_id[i:ie], idx[i:ie], batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
                             return
                         except faster_fifo.Full:
                             pass
