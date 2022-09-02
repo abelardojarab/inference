@@ -397,9 +397,9 @@ class QueueRunner(RunnerBase):
         super().__init__(model, ds, threads, post_proc, max_batchsize)
         queue_size_multiplier = 4  # (args.samples_per_query_offline + max_batchsize - 1) // max_batchsize)
 
-        # We keeping 64kB for each thread, should be a function of max_batchsize
+        # We keeping 128kB for each thread, should be a function of max_batchsize
         log.info("Setting queue for #threads={}".format(threads))
-        self.tasks = JoinableQueue(max_size_bytes=threads * queue_size_multiplier * 65536)
+        self.tasks = JoinableQueue(max_size_bytes=threads * queue_size_multiplier * 131072)
         self.workers = []
         self.result_dict = {}
 
@@ -437,13 +437,25 @@ class QueueRunner(RunnerBase):
 
         if query_len < self.max_batchsize:
             batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets = self.ds.get_samples(idx)
-            self.tasks.put(Item(query_id, idx, batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
+            while True:
+                with contextlib.suppress():
+                    try:
+                        self.tasks.put_nowait(Item(query_id, idx, batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
+                        return
+                    except faster_fifo.Full:
+                        pass
         else:
             bs = self.max_batchsize
             for i in range(0, query_len, bs):
                 ie = min(i + bs, query_len)
                 batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets = self.ds.get_samples(idx[i:ie])
-                self.tasks.put(Item(query_id[i:ie], idx[i:ie], batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
+                while True:
+                    with contextlib.suppress():
+                        try:
+                            self.tasks.put_nowait(Item(query_id[i:ie], idx[i:ie], batch_dense_X, batch_lS_o, batch_lS_i, batch_T, idx_offsets))
+                            return
+                        except faster_fifo.Full:
+                            pass
 
     def finish(self):
         # exit all threads
