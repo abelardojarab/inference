@@ -412,8 +412,8 @@ class QueueRunner(RunnerBase):
                 qitems = []
                 try:
                     qitems.extend(tasks_queue.get_many(
-                        max_messages_to_get=2,
-                        timeout=5,
+                        max_messages_to_get=4,
+                        timeout=10,
                         block=True))
                     # qitem = tasks_queue.get(block=True)
                     for qitem in qitems:
@@ -444,9 +444,9 @@ class QueueRunner(RunnerBase):
 
     def finish(self):
         # exit all threads
-        for _ in self.workers:
-            self.tasks.put(None)
-            self.tasks.put(None)
+        # for _ in self.workers:
+        #     self.tasks.put(None)
+        self.tasks.put_many([None, None, None, None] * len(self.workers))
         for worker in self.workers:
             worker.join()
 
