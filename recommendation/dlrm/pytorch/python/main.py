@@ -420,7 +420,7 @@ class QueueRunner(RunnerBase):
                         if qitem is None:
                             # None in the queue indicates the parent want us to exit
                             # tasks_queue.task_done()
-                            break
+                            return
                         self.run_one_item(qitem)
                         # tasks_queue.task_done()
                 except faster_fifo.Empty:
