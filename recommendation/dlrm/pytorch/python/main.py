@@ -397,6 +397,7 @@ class QueueRunner(RunnerBase):
         queue_size_multiplier = 4 #(args.samples_per_query_offline + max_batchsize - 1) // max_batchsize)
 
         # We keeping 64kB for each thread, should be a function of max_batchsize
+        log.info("Setting queue for #threads={}".format(threads))
         self.tasks = JoinableQueue(max_size_bytes=threads * queue_size_multiplier * 65536)
         self.workers = []
         self.result_dict = {}
