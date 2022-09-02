@@ -322,6 +322,7 @@ class Item:
         self.idx_offsets = idx_offsets
         self.start = time.time()
 
+
 class RunnerBase:
     def __init__(self, model, ds, threads, post_proc=None, max_batchsize=128):
         self.take_accuracy = False
@@ -394,7 +395,7 @@ class RunnerBase:
 class QueueRunner(RunnerBase):
     def __init__(self, model, ds, threads, post_proc=None, max_batchsize=128):
         super().__init__(model, ds, threads, post_proc, max_batchsize)
-        queue_size_multiplier = 4 #(args.samples_per_query_offline + max_batchsize - 1) // max_batchsize)
+        queue_size_multiplier = 4  # (args.samples_per_query_offline + max_batchsize - 1) // max_batchsize)
 
         # We keeping 64kB for each thread, should be a function of max_batchsize
         log.info("Setting queue for #threads={}".format(threads))
@@ -429,7 +430,6 @@ class QueueRunner(RunnerBase):
                 except faster_fifo.Empty:
                     pass
 
-
     def enqueue(self, query_samples):
         idx = [q.index for q in query_samples]
         query_id = [q.id for q in query_samples]
@@ -452,7 +452,6 @@ class QueueRunner(RunnerBase):
         self.tasks.put_many([None, None, None, None] * len(self.workers))
         for worker in self.workers:
             worker.join()
-
 
 
 def add_results(final_results, name, result_dict, result_list, took, show_accuracy=False):
