@@ -18,6 +18,8 @@ import time
 # from multiprocessing import JoinableQueue
 # from quick_queue import QJoinableQueue as JoinableQueue
 from faster_fifo import Queue as JoinableQueue
+import faster_fifo
+import contextlib
 
 import mlperf_loadgen as lg
 import numpy as np
@@ -393,7 +395,7 @@ class QueueRunner(RunnerBase):
     def __init__(self, model, ds, threads, post_proc=None, max_batchsize=128):
         super().__init__(model, ds, threads, post_proc, max_batchsize)
         queue_size_multiplier = 4 #(args.samples_per_query_offline + max_batchsize - 1) // max_batchsize)
-        self.tasks = JoinableQueue(threads * queue_size_multiplier)
+        self.tasks = JoinableQueue(max_size_bytes=threads * queue_size_multiplier * 4096)
         self.workers = []
         self.result_dict = {}
 
@@ -406,13 +408,24 @@ class QueueRunner(RunnerBase):
     def handle_tasks(self, tasks_queue):
         """Worker thread."""
         while True:
-            qitem = tasks_queue.get()
-            if qitem is None:
-                # None in the queue indicates the parent want us to exit
-                # tasks_queue.task_done()
-                break
-            self.run_one_item(qitem)
-            # tasks_queue.task_done()
+            with contextlib.suppress():
+                qitems = []
+                try:
+                    qitems.extend(tasks_queue.get_many(
+                        max_messages_to_get=2,
+                        timeout=5,
+                        block=True))
+                    # qitem = tasks_queue.get(block=True)
+                    for qitem in qitems:
+                        if qitem is None:
+                            # None in the queue indicates the parent want us to exit
+                            # tasks_queue.task_done()
+                            break
+                        self.run_one_item(qitem)
+                        # tasks_queue.task_done()
+                except faster_fifo.Empty:
+                    pass
+
 
     def enqueue(self, query_samples):
         idx = [q.index for q in query_samples]
@@ -432,6 +445,7 @@ class QueueRunner(RunnerBase):
     def finish(self):
         # exit all threads
         for _ in self.workers:
+            self.tasks.put(None)
             self.tasks.put(None)
         for worker in self.workers:
             worker.join()
