@@ -1,0 +1,22 @@
+{
+    "TestScenario.Offline": {
+        "count": 1536,
+        "good_items": 3556618,
+        "mean": 335.30843049598235,
+        "percentiles": {
+            "50.0": 361.06574177742004,
+            "80.0": 499.2057321071625,
+            "90.0": 512.1172580718994,
+            "95.0": 524.2372053861618,
+            "99.0": 547.8004547476769,
+            "99.9": 553.8380799901486
+        },
+        "qps": 2.301415167769751,
+        "took": 667.4154326915741,
+        "total_items": 7190480
+    },
+    "cmdline": "Namespace(accuracy=False, backend='pytorch-native', cache=0, count_queries=None, count_samples=None, data_sub_sample_rate=0.0, dataset='terabyte', dataset_path='./fake_criteo/', duration=None, find_peak_performance=False, inputs=['continuous and categorical features'], max_batchsize=16, max_ind_range=40000000, max_latency=None, mlperf_bin_loader=True, mlperf_conf='../../../mlperf.conf', model='dlrm', model_path='../../model//dlrm_terabyte.pytorch', numpy_rand_seed=123, output='./dlrm_results', outputs=['probability'], profile='dlrm-terabyte-pytorch', samples_per_query_multistream=8, samples_per_query_offline=100, samples_to_aggregate_fix=None, samples_to_aggregate_max=None, samples_to_aggregate_min=None, samples_to_aggregate_quantile_file='./tools/dist_quantile.txt', samples_to_aggregate_trace_file='dlrm_trace_of_aggregated_samples.txt', scenario='Offline', target_qps=None, test_num_workers=0, threads=256, use_gpu=False, user_conf='user.conf')",
+    "runtime": "pytorch-native-dlrm",
+    "time": 1662093692,
+    "version": "1.12.1+cu102"
+}
