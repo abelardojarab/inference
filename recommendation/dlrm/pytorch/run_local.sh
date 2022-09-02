@@ -9,6 +9,6 @@ if [ ! -d $OUTPUT_DIR ]; then
 fi
 
 set -x # echo the next command
-python python/main.py --profile $profile $common_opt --model $model --model-path $model_path \
+python3 python/main.py --profile $profile $common_opt --model $model --model-path $model_path \
        --dataset $dataset --dataset-path $DATA_DIR \
        --output $OUTPUT_DIR $EXTRA_OPS $@

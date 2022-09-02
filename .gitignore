@@ -2,3 +2,9 @@ loadgen/build/
 libmlperf_loadgen.a
 __pycache__/
 generated/
+*.patch
+recommendation/model/*
+loadgen/dist/*
+loadgen/mlperf_loadgen.egg-info/*
+recommendation/dlrm/pytorch/dlrm_results/*
+recommendation/dlrm/pytorch/dlrm_trace_of_aggregated_samples.txt
