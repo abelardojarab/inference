@@ -404,6 +404,7 @@ class QueueRunner(RunnerBase):
         self.result_dict = {}
 
         for _ in range(self.threads):
+            # This is not good, basically we are all stuck with the GIL
             worker = threading.Thread(target=self.handle_tasks, args=(self.tasks,))
             worker.daemon = True
             self.workers.append(worker)
